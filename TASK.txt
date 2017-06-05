@@ -1,0 +1,17 @@
+These are the task to be done in coming days
+1. From Hardware/Adruino point of view.
+At the sender side:
+Create a 23 byte packet encoder and send it in the interval specified in evaluation document.
+
+At the Reciever side:
+i)Recieve the 23 byte and extract necessary data
+ii) Store these data in local database
+iii)optimize power or energy consumptions using SLEEP processor or SLEEP radio.
+iv)send the data to app in a popular format-may be json
+
+2. From Hardware/Adruino point of view.
+
+i) Combine the two graphs and improve the layout
+ii)Check how to plot real time data
+iii)Local database to store the data/send data to webserver.
+iv) Test the app
