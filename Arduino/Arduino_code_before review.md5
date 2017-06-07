@@ -5,6 +5,7 @@ ideas
 
 
 https://github.com/lowpowerlab/lowpower
+http://www.rocketscream.com/blog/2011/07/04/lightweight-low-power-arduino-library/
 
 #define IS_RFM69HW_HCW  //uncomment only for RFM69HW/HCW! Leave out if you have RFM69W/CW!
 
