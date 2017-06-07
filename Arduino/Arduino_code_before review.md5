@@ -1,1 +1,17 @@
 Codes for arduino before review
+
+ideas
+
+
+
+https://github.com/lowpowerlab/lowpower
+
+#define IS_RFM69HW_HCW  //uncomment only for RFM69HW/HCW! Leave out if you have RFM69W/CW!
+
+
+Promiscuous Mode”
+
+disable it
+
+
+based on RSSI
