@@ -2,8 +2,9 @@
 #include <SPI.h>
 #include <SPIFlash.h>
 #include <LowPower.h> 
+#include <TimeLib.h>
 
-#define NODEID      1
+#define NODEID      15
 #define NETWORKID   100
 #define FREQUENCY   RF69_433MHZ //Match this with the version of your Moteino! (others: RF69_433MHZ, RF69_868MHZ)
 #define KEY         "sampleEncryptKey" //has to be same 16 characters/bytes on all nodes, not more not less!
@@ -17,6 +18,7 @@ SPIFlash flash(8, 0xEF30);      //EF40 for 16mbit windbond chip
 bool promiscuousMode = false;     //set to 'true' to sniff all packets on the same network
 
 typedef struct {
+   byte pos_SINK_ID;
   byte pos_PACKET_TYPE;
   byte pos_PACKET_LENGTH;
   byte pos_SOURCE_ID;
@@ -121,13 +123,28 @@ void loop() {
       Serial.print("Invalid payload received, not matching Payload struct!");
     else
     {
-      theData = *(payLoad*)radio.DATA; //assume radio.DATA actually contains our struct and not something else
-      Serial.print(" nodeId=");
-      Serial.print(theData.pos_SOURCE_ID);
-      Serial.print(" uptime=");
-      Serial.print(theData.pos_EPOCH_0);
-      Serial.print(" temp=");
-      Serial.print(theData.pos_TEMP_0);
+     theData = *(payLoad*)radio.DATA;     //assume radio.DATA actually contains our struct and not something else
+      uint32_t time =          (uint32_t)theData.pos_EPOCH_0 << 24 |
+                               (uint32_t)theData.pos_EPOCH_1 << 16 |
+                               (uint32_t)theData.pos_EPOCH_2 << 8  |
+                               (uint32_t)theData.pos_EPOCH_3; 
+
+        
+        uint16_t dielectric =  (uint16_t)theData.pos_DIELECTRIC_0 << 8 |
+                               (uint16_t)theData.pos_DIELECTRIC_1;
+                            
+        uint16_t temperature = (uint16_t)theData.pos_TEMP_0 << 8 |
+                               (uint16_t)theData.pos_TEMP_1;    
+                      
+        TimeElements tm;
+        breakTime(time, tm);        
+       // Serial.print(" {**Decagon5TMData ");
+        Serial.println(theData.pos_PACKET_LENGTH );         
+        Serial.println(theData.pos_SOURCE_ID );
+       // Serial.println(time, tm.Day, tm.Month, tm.Year, tm.Hour, tm.Minute, tm.Second );
+        Serial.println(temperature );
+        Serial.println(dielectric);
+        //Serial.print("Decagon5TMData**}");
     }
     
     if (radio.ACKRequested())
@@ -154,7 +171,7 @@ void loop() {
     Blink(LED,3);
   }
   //sleep MCU for 8seconds
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+ // LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
 }
 
 void Blink(byte PIN, int DELAY_MS)
