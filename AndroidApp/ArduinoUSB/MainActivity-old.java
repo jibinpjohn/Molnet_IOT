@@ -20,9 +20,6 @@ import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,78 +32,58 @@ public class MainActivity extends Activity {
     UsbDevice device;
     UsbSerialDevice serialPort;
     UsbDeviceConnection connection;
-    private StringBuilder sb = new StringBuilder();
+	 private StringBuilder sb = new StringBuilder();
+	 final int RECIEVE_MESSAGE = 1;
+	Handler h;
+	
+	    h = new Handler() {
+        public void handleMessage(android.os.Message msg) {
+            switch (msg.what) {
+            case RECIEVE_MESSAGE:                                                   // if receive massage
+                byte[] readBuf = (byte[]) msg.obj;
+                String strIncom = new String(readBuf, 0, msg.arg1);                 // create string from bytes array
+                sb.append(strIncom);                                                // append string
+                int endOfLineIndex = sb.indexOf("\r\n");                            // determine the end-of-line
+                if (endOfLineIndex > 0) {       
+			
+                    String sbprint = sb.substring(0, endOfLineIndex);               // extract string
+                    sb.delete(0, sb.length());                                      // and clear
+                    //txtArduino.setText("Data from Arduino: " + sbprint); 
+					tvAppend(textView,"Data from Arduino: " + sbprint);					
+					// update TextView
+        
+                }
+                //Log.d(TAG, "...String:"+ sb.toString() +  "Byte:" + msg.arg1 + "...");
+                break;
+            }
+        };
+    };
 
     UsbSerialInterface.UsbReadCallback mCallback = new UsbSerialInterface.UsbReadCallback() { //Defining a Callback which triggers whenever data is read.
         @Override
         public void onReceivedData(byte[] arg0) {
             String data = null;
-            //byte[] buffer = new byte[256];
+           
             try {
                 data = new String(arg0, "UTF-8");
-              //buffer=(byte[]) arg0;
-              //String strIncom = new String(buffer, 0);
-                sb.append(data);
-               int endOfLineIndex = sb.indexOf("/CS");
-                int startCS = sb.indexOf("CS");
-
-
-                //String packets[] =data.split("ENDPACKET");
-
-               // tvAppend(textView, "Length:" + packets.length+"\n");
-
-                if (endOfLineIndex > 0) {
-
-
-                    String sbprint = sb.substring((startCS + 2), endOfLineIndex);
-//                    String sbprint = sb.substring((startCS + 2), endOfLineIndex);
-                    Date date=new Date();
-                    DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                    DateFormat format2 = new SimpleDateFormat("HH:mm:ss");
-                    String formatted = format.format(date);
-                    tvAppend(textView,"Time:" + formatted+"\n");
-  //                  tvAppend(textView,"String:" + sbprint+"\n");
-//                    String formatted2 = format2.format(date);
-//                    sample.setTime_stamp(formatted2);
-                    String segments[] =sbprint.split("/");
-                    //tvAppend(textView, "PAKet:" +sbprint+"\n");
-                    int decimal=Integer.parseInt(segments[2]);
-                    sample.setTemperature((float)decimal);
-                    tvAppend(textView, "Temperature:" + sample.getTemperature()+"\n");
-                    decimal=Integer.parseInt(segments[1]);
-                    sample.setDielectric((float)decimal);
-                    tvAppend(textView, "Dielectric:" + sample.getDielectric()+"\n");
-
-                    tvAppend(textView, "SINK_ID:" + Integer.parseInt(segments[3])+"\n");
-
-
-                    tvAppend(textView, "PACKET_TYPE:" + Integer.parseInt(segments[4])+"\n");
-
-                    tvAppend(textView, "PACKET_LENGTH:" + Integer.parseInt(segments[5])+"\n");
-                    tvAppend(textView, "SOURCE_ID:" + Integer.parseInt(segments[6])+"\n");
-                    tvAppend(textView, "PACKET_SEND:" + Integer.parseInt(segments[7])+"\n");
-                    tvAppend(textView, "SENDING_RETRIES:" + Integer.parseInt(segments[8])+"\n");
-                    tvAppend(textView, "LOST_PACKET:" + Integer.parseInt(segments[9])+"\n");
-                    tvAppend(textView, "RSS:" + Integer.parseInt(segments[10])+"\n");
-                    tvAppend(textView, "RTT:" + Integer.parseInt(segments[11])+"\n");
-                    tvAppend(textView, "eeprom:" + Integer.parseInt(segments[12])+"\n");
-
-//                    for (int i=0;i<segments.length;i++)
-//                    {
-//                        tvAppend(textView, "Segment"+i+":" + segments[i]+"\n");
-//                    }
-
-
-                    sb.delete(0, sb.length());
-
-
-
-                }
-
-               //data.concat("\n");
-
+                data.concat("/n");
+                tvAppend(textView, data);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
+            }
+			
+			byte[] buffer = new byte[256];  // buffer store for the stream
+            int bytes; // bytes returned from read()
+ 
+            // Keep listening to the InputStream until an exception occurs
+            while (true) {
+                try {
+                    // Read from the InputStream
+                    bytes = mmInStream.read(buffer);        // Get number of bytes and message in "buffer"
+                    h.obtainMessage(RECIEVE_MESSAGE, bytes, -1, buffer).sendToTarget();     // Send to message queue Handler
+                } catch (IOException e) {
+                    break;
+                }
             }
 
 
@@ -184,15 +161,15 @@ public class MainActivity extends Activity {
 
         HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
         if (!usbDevices.isEmpty()) {
-            boolean keep;
+            boolean keep = true;
             for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
                 device = entry.getValue();
                 int deviceVID = device.getVendorId();
 //                if (deviceVID != 0x2341)//Arduino Vendor ID
 //                {
-                PendingIntent pi = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-                usbManager.requestPermission(device, pi);
-                keep = false;
+                    PendingIntent pi = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+                    usbManager.requestPermission(device, pi);
+                    keep = false;
 //                } else {
 //                    connection = null;
 //                    device = null;
@@ -238,16 +215,14 @@ public class MainActivity extends Activity {
 
     public void onClickPlot(View view) {
 
-//        Button androidMPrealtimeButton = (Button) findViewById(R.id.android_MP_Realtime);
-//        androidMPrealtimeButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this,allgraphs.class));
+        Button androidMPrealtimeButton = (Button) findViewById(R.id.android_MP_Realtime);
+        androidMPrealtimeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this,RealtimeLineChartActivity.class));
 
 
-//            }
-//        });
+            }
+        });
     }
-
-
 }

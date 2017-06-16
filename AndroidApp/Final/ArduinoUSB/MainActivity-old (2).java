@@ -41,60 +41,42 @@ public class MainActivity extends Activity {
         @Override
         public void onReceivedData(byte[] arg0) {
             String data = null;
-            //byte[] buffer = new byte[256];
+            byte[] buffer = new byte[256];
             try {
                 data = new String(arg0, "UTF-8");
-              //buffer=(byte[]) arg0;
-              //String strIncom = new String(buffer, 0);
-                sb.append(data);
-               int endOfLineIndex = sb.indexOf("/CS");
+               buffer=(byte[]) arg0;
+                String strIncom = new String(buffer, 0);
+                sb.append(strIncom);
+                int endOfLineIndex = sb.indexOf("/CS");
                 int startCS = sb.indexOf("CS");
-
-
-                //String packets[] =data.split("ENDPACKET");
-
-               // tvAppend(textView, "Length:" + packets.length+"\n");
+//                int startDel=sb.indexOf("[Dielectric:");
+//                int endDel=sb.indexOf("]");
 
                 if (endOfLineIndex > 0) {
-
-
-                    String sbprint = sb.substring((startCS + 2), endOfLineIndex);
-//                    String sbprint = sb.substring((startCS + 2), endOfLineIndex);
-                    Date date=new Date();
+                    String sbprint = sb.substring((startCS + 2), (startCS + 12));
+                    Date date=new Date(Long.parseLong(sbprint));
                     DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
                     DateFormat format2 = new SimpleDateFormat("HH:mm:ss");
                     String formatted = format.format(date);
-                    tvAppend(textView,"Time:" + formatted+"\n");
-  //                  tvAppend(textView,"String:" + sbprint+"\n");
-//                    String formatted2 = format2.format(date);
-//                    sample.setTime_stamp(formatted2);
-                    String segments[] =sbprint.split("/");
-                    //tvAppend(textView, "PAKet:" +sbprint+"\n");
-                    int decimal=Integer.parseInt(segments[2]);
+                    String formatted2 = format2.format(date);
+                    sample.setTime_stamp(formatted2);
+                    tvAppend(textView, "Time:" + formatted+"\n");
+                    tvAppend(textView, "Time Format2:" + formatted2+"\n");
+                    sbprint = sb.substring((startCS + 11),(startCS + 15));
+                    int decimal = Integer.parseInt(sbprint,16);
+
+//                    byte[] b = sbprint.getBytes();
+//                    int n=b.length;
+                   // tvAppend(textView, "Die:" + sbprint+"\n");
+                    tvAppend(textView, "Dielectric:" + decimal+"\n");
+                    sbprint = sb.substring((startCS + 15),endOfLineIndex);
+                    decimal = Integer.parseInt(sbprint,16);
+                    //tvAppend(textView, "T:"+ sbprint+"\n");
+
                     sample.setTemperature((float)decimal);
                     tvAppend(textView, "Temperature:" + sample.getTemperature()+"\n");
-                    decimal=Integer.parseInt(segments[1]);
-                    sample.setDielectric((float)decimal);
-                    tvAppend(textView, "Dielectric:" + sample.getDielectric()+"\n");
 
-                    tvAppend(textView, "SINK_ID:" + Integer.parseInt(segments[3])+"\n");
-
-
-                    tvAppend(textView, "PACKET_TYPE:" + Integer.parseInt(segments[4])+"\n");
-
-                    tvAppend(textView, "PACKET_LENGTH:" + Integer.parseInt(segments[5])+"\n");
-                    tvAppend(textView, "SOURCE_ID:" + Integer.parseInt(segments[6])+"\n");
-                    tvAppend(textView, "PACKET_SEND:" + Integer.parseInt(segments[7])+"\n");
-                    tvAppend(textView, "SENDING_RETRIES:" + Integer.parseInt(segments[8])+"\n");
-                    tvAppend(textView, "LOST_PACKET:" + Integer.parseInt(segments[9])+"\n");
-                    tvAppend(textView, "RSS:" + Integer.parseInt(segments[10])+"\n");
-                    tvAppend(textView, "RTT:" + Integer.parseInt(segments[11])+"\n");
-                    tvAppend(textView, "eeprom:" + Integer.parseInt(segments[12])+"\n");
-
-//                    for (int i=0;i<segments.length;i++)
-//                    {
-//                        tvAppend(textView, "Segment"+i+":" + segments[i]+"\n");
-//                    }
+                   // tvAppend(textView, "Temperature:" + sbprint+"\n");
 
 
                     sb.delete(0, sb.length());
@@ -103,7 +85,7 @@ public class MainActivity extends Activity {
 
                 }
 
-               //data.concat("\n");
+                data.concat("\n");
 
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
@@ -184,7 +166,7 @@ public class MainActivity extends Activity {
 
         HashMap<String, UsbDevice> usbDevices = usbManager.getDeviceList();
         if (!usbDevices.isEmpty()) {
-            boolean keep;
+            boolean keep = true;
             for (Map.Entry<String, UsbDevice> entry : usbDevices.entrySet()) {
                 device = entry.getValue();
                 int deviceVID = device.getVendorId();
@@ -242,7 +224,7 @@ public class MainActivity extends Activity {
 //        androidMPrealtimeButton.setOnClickListener(new View.OnClickListener() {
 //            @Override
 //            public void onClick(View view) {
-                startActivity(new Intent(MainActivity.this,allgraphs.class));
+                startActivity(new Intent(MainActivity.this,RealtimeLineChartActivity.class));
 
 
 //            }
